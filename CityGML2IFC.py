@@ -1,3 +1,14 @@
+"""CityGML to IFC converter.
+
+Usage:
+  CityGML2IFC.py -i <ifile> -o <ofile>
+  
+Options:
+  -h --help     Show this screen.
+  -i --input    Input GML filename.
+  -o --output   Output IFC filename.
+"""
+
 import xml.etree.ElementTree as ET
 import os
 import time
@@ -6,6 +17,7 @@ import sys
 import numpy
 import uuid
 from pyproj import Proj, transform
+from docopt import docopt
 
 def guid():
     x=str(uuid.uuid4())
@@ -144,7 +156,6 @@ def CityGML2IFC(path,dst):
     for obj in root.getiterator('{%s}cityObjectMember'% ns_citygml):
         cityObjects.append(obj)
 
-
     for cityObject in cityObjects:
     #createa a list iof different city objects
         for child in cityObject.getchildren():
@@ -197,8 +208,12 @@ def CityGML2IFC(path,dst):
     "\n#108 = IFCAXIS2PLACEMENT3D (#109, #110, #111);" 
     "\n#112 = IFCDIRECTION ((1., 0., 0.));" 
     "\n#107 = IFCGEOMETRICREPRESENTATIONCONTEXT ($, 'Model', 3, 1.E-005, #108, #112);" 
-    "\n#114 = IFCSIUNIT (*, .LENGTHUNIT., $, .METRE.);" 
-    "\n#113 = IFCUNITASSIGNMENT ((#114));"
+    # "\n#114 = IFCSIUNIT (*, .LENGTHUNIT., $, .METRE.);" 
+    # "\n#113 = IFCUNITASSIGNMENT ((#114));"
+    "\n#120 = IFCSIUNIT (*, .AREAUNIT., $, .SQUARE_METRE.);"
+    "\n#121 = IFCSIUNIT (*, .LENGTHUNIT., $, .METRE.);"
+    "\n#122 = IFCSIUNIT (*, .VOLUMEUNIT., $, .CUBIC_METRE.);"
+    "\n#119 = IFCUNITASSIGNMENT ((#120, #121, #122));"
     "\n#115= IFCMATERIAL('K01-1');"
     "\n#116= IFCMATERIAL('K01-2');"
     "\n#117= IFCMATERIAL('K01-3');"    
@@ -235,6 +250,7 @@ def CityGML2IFC(path,dst):
                 print(ifcpolyloopid," = IFCPOLYLOOP ((", end=' ')
                 #note; end= is used to identify what tp print after printstatment have ended
                 loop_string = ""
+                loop_string2 = ""
                 for Element_id in ifc_id_list:
                     loop_string += (str((Element_id)).strip("''"))
                     loop_string += (",")
@@ -300,6 +316,7 @@ def CityGML2IFC(path,dst):
             print("#"+str(next(counter))," = IFCRELAGGREGATES (",guid(),", #102, $, $, ",ifcprojectid,", (", ifcbuildingid,"));")
             print("#"+str(next(counter))," = IFCRELCONTAINEDINSPATIALSTRUCTURE (",guid(),", #102, $, $, (", end=' ')
             loop_string = ""
+            loop_string2 = ""
             for Element_id in ifcsurfaceid_list:
                 loop_string += (str((Element_id)).strip("''"))
                 loop_string += (",")
@@ -308,9 +325,10 @@ def CityGML2IFC(path,dst):
 
 #Added material when needed by commenting the below back in
 
-        #assign material #115 to all walls
+        # #assign material #115 to all walls
         print("#"+str(next(counter))," = IFCRELASSOCIATESMATERIAL (",guid(),",#102,$,$,(", end=' ')
         loop_string = ""
+        loop_string2 = ""
         for Element_id in wall_id_list:
             loop_string += (str((Element_id)).strip("''"))
             loop_string += (",")
@@ -320,6 +338,7 @@ def CityGML2IFC(path,dst):
         #assign material #116 to all roofs
         print("#"+str(next(counter))," = IFCRELASSOCIATESMATERIAL (",guid(),",#102,$,$,(", end=' ')
         loop_string = ""
+        loop_string2 = ""
         for Element_id in roof_id_list:
             loop_string += (str((Element_id)).strip("''"))
             loop_string += (",")
@@ -329,6 +348,7 @@ def CityGML2IFC(path,dst):
         #assign material #117 to all floors
         print("#"+str(next(counter))," = IFCRELASSOCIATESMATERIAL (",guid(),",#102,$,$,(", end=' ')
         loop_string = ""
+        loop_string2 = ""
         for Element_id in floor_id_list:
             loop_string += (str((Element_id)).strip("''"))
             loop_string += (",")
@@ -338,6 +358,7 @@ def CityGML2IFC(path,dst):
         #assign material #118 to all ground
         print("#"+str(next(counter))," = IFCRELASSOCIATESMATERIAL (",guid(),",#102,$,$,(", end=' ')
         loop_string = ""
+        loop_string2 = ""
         for Element_id in ground_id_list:
             loop_string += (str((Element_id)).strip("''"))
             loop_string += (",")
@@ -367,6 +388,7 @@ def CityGML2IFC(path,dst):
             print(ifcpolyloopid," = IFCPOLYLOOP ((", end=' ')
             #note; end= is used to identify what tp print after printstatment have ended
             loop_string = ""
+            loop_string2 = ""
             for Element_id in ifc_id_list:
                 loop_string += (str((Element_id)).strip("''"))
                 loop_string += (",")
@@ -409,4 +431,6 @@ path="Source.gml"
 #path="Ground.gml"
 dst="Result.ifc"
 
-CityGML2IFC(path,dst)
+if __name__ == '__main__':
+    arguments = docopt(__doc__)
+    CityGML2IFC(arguments['<ifile>'],arguments['<ofile>'])
